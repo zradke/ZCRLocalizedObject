@@ -1,0 +1,23 @@
+PODS:
+  - Expecta (0.3.1)
+  - OCMock (3.1.1)
+  - Specta (0.2.1)
+  - ZCRLocalizedObject (0.1.0)
+
+DEPENDENCIES:
+  - Expecta
+  - OCMock
+  - Specta (~> 0.2.1)
+  - ZCRLocalizedObject (from `../`)
+
+EXTERNAL SOURCES:
+  ZCRLocalizedObject:
+    :path: ../
+
+SPEC CHECKSUMS:
+  Expecta: 03aabd0a89d8dea843baecb19a7fd7466a69a31d
+  OCMock: f6cb8c162ab9d5620dddf411282c7b2c0ee78854
+  Specta: 9141310f46b1f68b676650ff2854e1ed0b74163a
+  ZCRLocalizedObject: 2beb91fc29dbe18b85840b763a1b37c1c469754c
+
+COCOAPODS: 0.33.1

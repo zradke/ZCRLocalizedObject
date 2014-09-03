@@ -5,11 +5,80 @@
 [![License](https://img.shields.io/cocoapods/l/ZCRLocalizedObject.svg?style=flat)](http://cocoadocs.org/docsets/ZCRLocalizedObject)
 [![Platform](https://img.shields.io/cocoapods/p/ZCRLocalizedObject.svg?style=flat)](http://cocoadocs.org/docsets/ZCRLocalizedObject)
 
-## Usage
+Dynamically localized objects that just work.
 
-To run the example project, clone the repo, and run `pod install` from the Example directory first.
+## Getting started
 
-## Requirements
+Assuming you have some localized data being dynamically served:
+
+```
+{
+  "en": "Hello",
+  "en-GB": "Good day",
+  "en-US": "Howdy",
+  "fr": "Bonjour"
+}
+```
+
+Create a ZCRLocalizedObject from it:
+
+```
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedSpecificityMostRecent);
+```
+
+Then retrieve the localized value:
+
+```
+// Device language set to 'British English'
+object.localizedObject; // @"Good day"
+```
+
+## Specificity
+
+You can also specify how exactly you want the localization to work using the different specificity values.
+
+### ZCRLocalizedObjectSpecificityExact
+
+Requires the language and region to match exactly, otherwise returns nil.
+
+```
+NSDictionary *localizedData = @{@"en-GB": @"The colour",
+                                @"en": @"The color"};
+                  
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedObjectSpecificityExact);
+
+// Device set to 'English'
+object.localizedObject; // nil
+
+// Device set to 'British English'
+object.localizedObject; // @"The colour" 
+```
+
+### ZCRLocalizedObjectSpecificityLanguage
+
+Checks for an exact match, then checks for a match with based on the root language and any other present regions before returning nil.
+
+```
+NSDictionary *localizedData = @{@"en": @"The color"};
+
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedObjectSpecificityLanguage);
+
+// Device set to 'British English'
+object.localizedObject; // @"The color" 
+```
+
+### ZCRLocalizedObjectSpecificityMostRecent
+
+Checks for an exact match, then a language match, then goes through all possible languages in order of preference to locate a match following the same pattern of exact and language matches before returning nil.
+
+```
+NSDictionary *localizedData = @{@"fr": @"La couleur"};
+                  
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedObjectSpecificityMostRecent);
+
+// Device set to 'French' then 'English'
+object.localizedObject; // @"La couleur" 
+```
 
 ## Installation
 
@@ -20,7 +89,7 @@ it, simply add the following line to your Podfile:
 
 ## Author
 
-Zach Radke, zachary.radke@mail.rakuten.com
+Zach Radke, zach.radke@gmail.com
 
 ## License
 
