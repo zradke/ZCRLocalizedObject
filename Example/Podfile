@@ -1,0 +1,10 @@
+target 'ZCRLocalizedObject', :exclusive => true do
+  pod "ZCRLocalizedObject", :path => "../"
+end
+
+target 'Tests', :exclusive => true do
+  pod "ZCRLocalizedObject", :path => "../"
+
+  pod 'Specta', '~> 0.2.1'
+  pod 'Expecta'
+end
