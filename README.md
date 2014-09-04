@@ -1,6 +1,6 @@
 # ZCRLocalizedObject
 
-[![CI Status](http://img.shields.io/travis/Zach Radke/ZCRLocalizedObject.svg?style=flat)](https://travis-ci.org/Zach Radke/ZCRLocalizedObject)
+[![CI Status](http://img.shields.io/travis/zradke/ZCRLocalizedObject.svg?style=flat)](https://travis-ci.org/zradke/ZCRLocalizedObject)
 [![Version](https://img.shields.io/cocoapods/v/ZCRLocalizedObject.svg?style=flat)](http://cocoadocs.org/docsets/ZCRLocalizedObject)
 [![License](https://img.shields.io/cocoapods/l/ZCRLocalizedObject.svg?style=flat)](http://cocoadocs.org/docsets/ZCRLocalizedObject)
 [![Platform](https://img.shields.io/cocoapods/p/ZCRLocalizedObject.svg?style=flat)](http://cocoadocs.org/docsets/ZCRLocalizedObject)
