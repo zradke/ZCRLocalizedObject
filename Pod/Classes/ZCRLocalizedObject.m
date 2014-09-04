@@ -13,6 +13,22 @@ ZCRLocalizedObject *ZCRLocalize(NSDictionary *localizedObjectsForLanguageCodes, 
     return [[ZCRLocalizedObject alloc] initWithLocalizationTable:localizedObjectsForLanguageCodes specificity:specificity];
 };
 
+
+static NSString *ZCRStringFromSpecificity(ZCRLocalizationSpecificity specificity)
+{
+    switch (specificity)
+    {
+        case ZCRLocalizationSpecificityExact:
+            return @"exact match";
+        case ZCRLocalizationSpecificityLanguage:
+            return @"language member match";
+        case ZCRLocalizationSpecificityMostRecent:
+            return @"most recent match";
+        default:
+            return nil;
+    }
+}
+
 static NSArray *ZCRPreferredLanguagesFromBundle(NSBundle *bundle)
 {
     NSMutableArray *bundleLanguages = [[bundle localizations] mutableCopy];
@@ -187,6 +203,19 @@ static NSDictionary *ZCRCanonizeLocalizationTable(NSDictionary *rawLocalizationT
     }
     
     return nil;
+}
+
+
+#pragma mark - NSObject
+
+- (NSString *)description
+{
+    return [self.localizedObject description];
+}
+
+- (NSString *)debugDescription
+{
+    return [NSString stringWithFormat:@"<%@:%p> specificity: %@\n%@", [self class], self, ZCRStringFromSpecificity(self.specificity), self.localizationTable];
 }
 
 @end
