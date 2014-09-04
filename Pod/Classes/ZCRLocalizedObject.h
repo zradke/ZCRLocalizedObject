@@ -3,7 +3,7 @@
 //  ZCRLocalizedObject
 //
 //  Created by Zachary Radke on 9/3/14.
-//
+//  Copyright (c) 2014 Zach Radke. All rights reserved.
 //
 
 @import Foundation;

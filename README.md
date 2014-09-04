@@ -23,7 +23,7 @@ Assuming you have some localized data being dynamically served:
 Create a ZCRLocalizedObject from it:
 
 ```
-ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedSpecificityMostRecent);
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizationSpecificityMostRecent);
 ```
 
 Then retrieve the localized value:
@@ -37,7 +37,7 @@ object.localizedObject; // @"Good day"
 
 You can also specify how exactly you want the localization to work using the different specificity values.
 
-### ZCRLocalizedObjectSpecificityExact
+### ZCRLocalizationSpecificityExact
 
 Requires the language and region to match exactly, otherwise returns nil.
 
@@ -45,7 +45,7 @@ Requires the language and region to match exactly, otherwise returns nil.
 NSDictionary *localizedData = @{@"en-GB": @"The colour",
                                 @"en": @"The color"};
                   
-ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedObjectSpecificityExact);
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizationSpecificityExact);
 
 // Device set to 'English'
 object.localizedObject; // nil
@@ -54,27 +54,27 @@ object.localizedObject; // nil
 object.localizedObject; // @"The colour" 
 ```
 
-### ZCRLocalizedObjectSpecificityLanguage
+### ZCRLocalizationSpecificityLanguage
 
 Checks for an exact match, then checks for a match with based on the root language and any other present regions before returning nil.
 
 ```
 NSDictionary *localizedData = @{@"en": @"The color"};
 
-ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedObjectSpecificityLanguage);
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizationSpecificityLanguage);
 
 // Device set to 'British English'
 object.localizedObject; // @"The color" 
 ```
 
-### ZCRLocalizedObjectSpecificityMostRecent
+### ZCRLocalizationSpecificityMostRecent
 
 Checks for an exact match, then a language match, then goes through all possible languages in order of preference to locate a match following the same pattern of exact and language matches before returning nil.
 
 ```
 NSDictionary *localizedData = @{@"fr": @"La couleur"};
                   
-ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizedObjectSpecificityMostRecent);
+ZCRLocalizedObject *object = ZCRLocalize(localizedData, ZCRLocalizationSpecificityMostRecent);
 
 // Device set to 'French' then 'English'
 object.localizedObject; // @"La couleur" 
