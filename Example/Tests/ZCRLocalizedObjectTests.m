@@ -291,14 +291,6 @@ describe(@"as a proxy", ^{
         
         expect([object lowercaseString]).to.equal(@"english");
     });
-    
-    it(@"uses the default value when a localization is missing", ^{
-        id object  = ZCRLocalize(localizationTable).withSpecificity(ZCRLocalizationSpecificityLanguage).inLanguage(@"de");
-        
-        expect({
-            [object lowercaseString];
-        }).toNot.raiseAny();
-    });
 });
 
 SpecEnd
