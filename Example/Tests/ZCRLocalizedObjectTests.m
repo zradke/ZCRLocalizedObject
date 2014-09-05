@@ -30,8 +30,6 @@ afterEach(^{
 
 describe(@"using the device language", ^{
     beforeEach(^{
-        specificity = ZCRLocalizationSpecificityMostRecent;
-        
         NSArray *preferredLanguages = @[@"en-GB",
                                         @"fr",
                                         @"en",
@@ -39,29 +37,37 @@ describe(@"using the device language", ^{
         OCMStub([localeClassMock preferredLanguages]).andReturn(preferredLanguages);
     });
     
-    it(@"should use the top preferred language", ^{
+    it(@"uses the top preferred language", ^{
         localizationTable = @{@"en-GB": @"British English",
                               @"en": @"English",
                               @"fr": @"Français"};
-        localizedObject = ZCRLocalize(localizationTable, specificity);
+        localizedObject = ZCRLocalize(localizationTable);
         
-        expect(localizedObject.localizedObject).to.equal(@"British English");
+        expect(localizedObject).to.equal(@"British English");
     });
     
-    it(@"should use the top language's root", ^{
+    it(@"uses the top language's root", ^{
         localizationTable = @{@"en": @"English",
                               @"fr": @"Français"};
-        localizedObject = ZCRLocalize(localizationTable, specificity);
+        localizedObject = ZCRLocalize(localizationTable);
         
-        expect(localizedObject.localizedObject).to.equal(@"English");
+        expect(localizedObject).to.equal(@"English");
     });
     
-    it(@"should respect the preference order", ^{
+    it(@"respects the preference order", ^{
         localizationTable = @{@"fr": @"Français",
                               @"de": @"Deutsch"};
-        localizedObject = ZCRLocalize(localizationTable, specificity);
+        localizedObject = ZCRLocalize(localizationTable);
         
-        expect(localizedObject.localizedObject).to.equal(@"Français");
+        expect(localizedObject).to.equal(@"Français");
+    });
+    
+    it(@"allows unknown regions", ^{
+        localizationTable = @{@"en-NARNIA": @"Narnian",
+                              @"fr": @"Français"};
+        localizedObject = ZCRLocalize(localizationTable);
+        
+        expect(localizedObject).to.equal(@"Narnian");
     });
 });
 
@@ -73,48 +79,40 @@ describe(@"using a supplied language", ^{
             specificity = ZCRLocalizationSpecificityExact;
         });
         
-        it(@"should match the exact canonized language code", ^{
+        it(@"matchs the exact canonized language code", ^{
             localizationTable = @{@"en-Gb": @"British English",
                                   @"en": @"English",
                                   @"fr": @"Français"};
             
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            NSString *result = [localizedObject localizedObjectForLanguage:languageCode];
-            
-            expect(result).to.equal(@"British English");
+            expect(localizedObject).to.equal(@"British English");
         });
         
-        it(@"should not match the generic language", ^{
+        it(@"does not match the generic language", ^{
             localizationTable = @{@"en": @"English",
                                   @"fr": @"Français"};
             
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            NSString *result = [localizedObject localizedObjectForLanguage:languageCode];
-            
-            expect(result).to.beNil();
+            expect(localizedObject.localizedObject).to.beNil();
         });
         
-        it(@"should not match a language region", ^{
+        it(@"does not match a language region", ^{
             localizationTable = @{@"en-Gb": @"British English",
                                   @"fr": @"Français"};
             
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(@"en");
             
-            NSString *result = [localizedObject localizedObjectForLanguage:@"en"];
-            
-            expect(result).to.beNil();
+            expect(localizedObject.localizedObject).to.beNil();
         });
         
-        it(@"should not match a different language", ^{
+        it(@"does not match a different language", ^{
             localizationTable = @{@"fr": @"Français"};
             
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(@"en");
             
-            NSString *result = [localizedObject localizedObjectForLanguage:@"en"];
-            
-            expect(result).to.beNil();
+            expect(localizedObject.localizedObject).to.beNil();
         });
     });
     
@@ -123,24 +121,24 @@ describe(@"using a supplied language", ^{
             specificity = ZCRLocalizationSpecificityLanguage;
         });
         
-        it(@"should return an exact match", ^{
+        it(@"returns an exact match", ^{
             localizationTable = @{@"en-gb": @"British English",
                                   @"en": @"English",
                                   @"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"British English");
+            expect(localizedObject).to.equal(@"British English");
         });
         
-        it(@"should match the root language", ^{
+        it(@"matches the root language", ^{
             localizationTable = @{@"en": @"English",
                                   @"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"English");
+            expect(localizedObject).to.equal(@"English");
         });
         
-        it(@"should use the user's preferred language order", ^{
+        it(@"uses the user's preferred language order", ^{
             NSArray *preferredLanguages = @[@"fr",
                                             @"en-GB",
                                             @"en-AU",
@@ -150,16 +148,16 @@ describe(@"using a supplied language", ^{
             localizationTable = @{@"en-au": @"Australian English",
                                   @"en": @"English",
                                   @"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"Australian English");
+            expect(localizedObject).to.equal(@"Australian English");
         });
         
-        it(@"should not match another language", ^{
+        it(@"does not match another language", ^{
             localizationTable = @{@"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.beNil();
+            expect(localizedObject.localizedObject).to.beNil();
         });
     });
     
@@ -175,46 +173,46 @@ describe(@"using a supplied language", ^{
             OCMStub([localeClassMock preferredLanguages]).andReturn(preferredLanguages);
         });
         
-        it(@"should return an exact match", ^{
+        it(@"returns an exact match", ^{
             localizationTable = @{@"en-GB": @"British English",
                                   @"en": @"English",
                                   @"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"British English");
+            expect(localizedObject).to.equal(@"British English");
         });
         
-        it(@"should return a root language match", ^{
+        it(@"returns a root language match", ^{
             localizationTable = @{@"en": @"English",
                                   @"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"English");
+            expect(localizedObject).to.equal(@"English");
         });
         
-        it(@"should respect the user's language preferences", ^{
+        it(@"respects the user's language preferences", ^{
             localizationTable = @{@"en-AU": @"Australian English",
                                   @"en": @"English",
                                   @"fr": @"Français"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"Australian English");
+            expect(localizedObject).to.equal(@"Australian English");
         });
         
-        it(@"should return the most recent matching language", ^{
+        it(@"returns the most recent matching language", ^{
             localizationTable = @{@"fr": @"Français",
                                   @"de": @"Deutsch"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(languageCode);
             
-            expect([localizedObject localizedObjectForLanguage:languageCode]).to.equal(@"Français");
+            expect(localizedObject).to.equal(@"Français");
         });
         
-        it(@"should use the root most recent matching language", ^{
+        it(@"uses the root most recent matching language", ^{
             localizationTable = @{@"en-GB": @"British English",
                                   @"en": @"English"};
-            localizedObject = ZCRLocalize(localizationTable, specificity);
+            localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(@"fr");
             
-            expect([localizedObject localizedObjectForLanguage:@"fr"]).to.equal(@"British English");
+            expect(localizedObject).to.equal(@"British English");
         });
     });
 });
@@ -244,21 +242,62 @@ describe(@"when the bundle includes more specific languages", ^{
         bundleMock = nil;
     });
     
-    it(@"should return an exact match", ^{
+    it(@"returns an exact match", ^{
         localizationTable = @{@"en-US": @"American English",
                               @"en-GB": @"British English",
                               @"en": @"English"};
-        localizedObject = ZCRLocalize(localizationTable, specificity);
+        localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(@"en-US");
         
-        expect([localizedObject localizedObjectForLanguage:@"en-US"]).to.equal(@"American English");
+        expect(localizedObject).to.equal(@"American English");
     });
     
     it(@"should include the bundle languages in the preference order", ^{
         localizationTable = @{@"en-US": @"American English",
                               @"de": @"Deutsch"};
-        localizedObject = ZCRLocalize(localizationTable, specificity);
+        localizedObject = ZCRLocalize(localizationTable).withSpecificity(specificity).inLanguage(@"fr");
         
-        expect([localizedObject localizedObjectForLanguage:@"fr"]).to.equal(@"American English");
+        expect(localizedObject).to.equal(@"American English");
+    });
+});
+
+describe(@"with a default object", ^{
+    beforeEach(^{
+        localizationTable = @{@"en": @"English",
+                              @"fr": @"Français"};
+    });
+    
+    it(@"uses the object when no localization exists", ^{
+        localizedObject = ZCRLocalize(localizationTable).withSpecificity(ZCRLocalizationSpecificityLanguage).withDefault(@"Unknown").inLanguage(@"de");
+        
+        expect(localizedObject).to.equal(@"Unknown");
+    });
+    
+    it(@"ignores the object when another localization is found", ^{
+        localizedObject = ZCRLocalize(localizationTable).withSpecificity(ZCRLocalizationSpecificityLanguage).withDefault(@"Unknown").inLanguage(@"fr");
+
+        expect(localizedObject).to.equal(@"Français");
+    });
+});
+
+
+describe(@"as a proxy", ^{
+    beforeEach(^{
+        localizationTable = @{@"en": @"English",
+                              @"fr": @"Français"};
+    });
+    
+    it(@"vends the desired method when a localization exists", ^{
+        id object  = ZCRLocalize(localizationTable).withSpecificity(ZCRLocalizationSpecificityLanguage).inLanguage(@"en");
+        
+        expect([object lowercaseString]).to.equal(@"english");
+    });
+    
+    it(@"uses the default value when a localization is missing", ^{
+        id object  = ZCRLocalize(localizationTable).withSpecificity(ZCRLocalizationSpecificityLanguage).inLanguage(@"de");
+        
+        expect({
+            [object lowercaseString];
+        }).toNot.raiseAny();
     });
 });
 

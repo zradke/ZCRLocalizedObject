@@ -33,48 +33,60 @@ typedef NS_ENUM(NSInteger, ZCRLocalizationSpecificity)
 
 
 /**
- *  Convenience initializer for the ZCRLocalizedObject class.
+ *  Convenience initializer for the ZCRLocalizedObject class, using ZCRLocalizationSpecificityMostRecent, no desired language, and no
+ *  default object.
  */
-FOUNDATION_EXPORT ZCRLocalizedObject *ZCRLocalize(NSDictionary *localizedObjectsForLanguageCodes, ZCRLocalizationSpecificity specificity);
+FOUNDATION_EXPORT ZCRLocalizedObject *ZCRLocalize(NSDictionary *localizedObjectsForLanguageCodes);
 
 
 /**
- *  A wrapper representing a single object in multiple languages. This wrapper can then be queried for the appropriate localized object for
- *  various languages. The returned value depends both on the backing localization table and the degree of specificity set when initializing
- *  the wrapper.
+ *  A proxy representing a single object available in multiple languages. The localization returned depends on a combination of the
+ *  proxy's specificity and languageCode property or, in its absence, the most recent preferred language. The proxies are immutable, and
+ *  will lazily load the localizedObject property on first access.
  *
- *  The class uses a combination of NSLocale's `+preferredLanguages` and NSBundle's `-localizations` to determine a list of possible
- *  languages, ordered by the user's preference. Only languages which belong to this list will function properly.
+ *  Since instances are proxied objects, any unknown message will be directed towards the localizedObject, whatever it may be. Note that
+ *  due to this behavior, the proxy may behave as nil if no matching object could be found. For isEqual: and the hash methods, instances
+ *  defer to the localizedObject.
+ *
+ *  The possible languages available to the proxy are a combination of [NSLocale preferredLanguages], [NSBundle localizations], and any
+ *  provided languages in the localization table.
  */
-@interface ZCRLocalizedObject : NSObject
+@interface ZCRLocalizedObject : NSProxy
 
 /**
  *  Designated initializer for this class.
  *
- *  @param localizedObjectsForLanguageCodes A dictionary of arbitrary objects set to language code keys. These keys should represent valid
- *                                          language codes that belong to the class' list of possible languages, though their case is
- *                                          irrelevant.
- *  @param specificity                      The specificity of the resulting wrapper when queried.
+ *  @param localizedObjectsForLanguageCodes Dictionary of arbitrary objects mapped to language code keys.
+ *  @param specificity                      The desired specificity of the resulting localization.
+ *  @param desiredLanguageCode              A specific desired language code to try and localize for. If nil, the class will use the
+ *                                          device's preferred languages.
+ *  @param defaultObject                    A default object that is returned when no other localization can be found. This may be nil.
  *
- *  @return A new wrapper object.
+ *  @return A new proxy representing a localized object.
  */
 - (instancetype)initWithLocalizationTable:(NSDictionary *)localizedObjectsForLanguageCodes
-                              specificity:(ZCRLocalizationSpecificity)specificity;
+                              specificity:(ZCRLocalizationSpecificity)specificity
+                          desiredLanguage:(NSString *)desiredLanguageCode
+                            defaultObject:(id)defaultObject;
 
 /**
- *  Uses the most preferred language from the class' list of possible languages and attempts to locate a localized object.
- *
- *  @return A localized object if it can be found, or nil if none matched the preferred language.
+ *  Returns a localized object matching the requirements of the proxy, or nil if none could be found.
  */
-- (id)localizedObject;
+@property (strong, nonatomic, readonly) id localizedObject;
 
 /**
- *  Uses the given language code and attempts to locate a localized object.
- *
- *  @param languageCode A valid language code which exists as part of the class' possible languages, though the case is irrelevant.
- *
- *  @return A localized object if it can be found, or nil if none matched the given language code.
+ *  Pass this block a specificity to get a copy of the receiver with the updated specificity.
  */
-- (id)localizedObjectForLanguage:(NSString *)languageCode;
+@property (strong, nonatomic, readonly) ZCRLocalizedObject *(^withSpecificity)(ZCRLocalizationSpecificity specificity);
+
+/**
+ *  Pass this block a desired language code to get a copy of the receiver with the updated desired language code.
+ */
+@property (strong, nonatomic, readonly) ZCRLocalizedObject *(^inLanguage)(NSString *desiredLanguageCode);
+
+/**
+ *  Pass this block a default object to get a copy of the receiver with the updated default object.
+ */
+@property (strong, nonatomic, readonly) ZCRLocalizedObject *(^withDefault)(id defaultObject);
 
 @end

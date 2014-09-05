@@ -8,11 +8,7 @@
 
 #import "ZCRLocalizedObject.h"
 
-ZCRLocalizedObject *ZCRLocalize(NSDictionary *localizedObjectsForLanguageCodes, ZCRLocalizationSpecificity specificity)
-{
-    return [[ZCRLocalizedObject alloc] initWithLocalizationTable:localizedObjectsForLanguageCodes specificity:specificity];
-};
-
+#pragma - Generating Language Lists
 
 static NSString *ZCRStringFromSpecificity(ZCRLocalizationSpecificity specificity)
 {
@@ -46,7 +42,7 @@ static NSArray *ZCRPreferredLanguagesFromBundle(NSBundle *bundle)
     return [preferredBundleLanguages copy];
 }
 
-static NSArray *ZCRAllPreferredLanguages()
+static NSArray *ZCRAllPreferredLanguages(NSArray *providedLanguages)
 {
     NSArray *bundleLanguages = ZCRPreferredLanguagesFromBundle([NSBundle mainBundle]);
     NSMutableArray *allLanguages = [[NSLocale preferredLanguages] mutableCopy];
@@ -76,67 +72,148 @@ static NSArray *ZCRAllPreferredLanguages()
         [allLanguages addObjectsFromArray:pendingLanguages];
     }
     
+    NSMutableArray *pendingProvidedLanguages = [providedLanguages mutableCopy];
+    [pendingProvidedLanguages removeObjectsInArray:allLanguages];
+    
+    [allLanguages addObjectsFromArray:pendingProvidedLanguages];
+    
     return [allLanguages copy];
-}
-
-static NSString *ZCRCanonizeLanguageCode(NSString *languageCode, NSArray *allLanguages)
-{
-    NSPredicate *predicate = [NSPredicate predicateWithFormat:@"SELF ==[cd] %@", languageCode];
-    return [[allLanguages filteredArrayUsingPredicate:predicate] firstObject];
 }
 
 static NSDictionary *ZCRCanonizeLocalizationTable(NSDictionary *rawLocalizationTable)
 {
     NSMutableDictionary *localizationTable = [NSMutableDictionary dictionary];
     
+    NSString *canonizedCode;
     for (NSString *languageCode in rawLocalizationTable)
     {
-        NSString *canonizedLanguageCode = ZCRCanonizeLanguageCode(languageCode, ZCRAllPreferredLanguages());
-        if (canonizedLanguageCode)
-        {
-            localizationTable[canonizedLanguageCode] = rawLocalizationTable[languageCode];
-        }
+        canonizedCode = [NSLocale canonicalLanguageIdentifierFromString:languageCode];
+        localizationTable[canonizedCode] = rawLocalizationTable[languageCode];
     }
     
     return [localizationTable copy];
 }
 
+
+#pragma mark - API
+
+ZCRLocalizedObject *ZCRLocalize(NSDictionary *localizedObjectsForLanguageCodes)
+{
+    return [[ZCRLocalizedObject alloc] initWithLocalizationTable:localizedObjectsForLanguageCodes
+                                                     specificity:ZCRLocalizationSpecificityMostRecent
+                                                 desiredLanguage:nil
+                                                   defaultObject:nil];
+};
+
+
 @interface ZCRLocalizedObject ()
 
 @property (strong, nonatomic) NSDictionary *localizationTable;
 @property (assign, nonatomic) ZCRLocalizationSpecificity specificity;
+@property (strong, nonatomic) NSString *desiredLanguage;
+@property (strong, nonatomic) id defaultObject;
+
+@property (assign) BOOL didGenerateLocalizedObject;
 
 @end
 
 @implementation ZCRLocalizedObject
+@synthesize localizedObject = _localizedObject;
 
-- (instancetype)initWithLocalizationTable:(NSDictionary *)localizedObjectsForLanguageCodes specificity:(ZCRLocalizationSpecificity)specificity
+- (instancetype)initWithLocalizationTable:(NSDictionary *)localizedObjectsForLanguageCodes
+                              specificity:(ZCRLocalizationSpecificity)specificity
+                          desiredLanguage:(NSString *)desiredLanguageCode
+                            defaultObject:(id)defaultObject
 {
-    if (!(self = [super init]))
-    {
-        return nil;
-    }
-    
     _localizationTable = ZCRCanonizeLocalizationTable(localizedObjectsForLanguageCodes);
     _specificity = specificity;
+    _desiredLanguage = [desiredLanguageCode copy];
+    _defaultObject = defaultObject;
     
     return self;
 }
 
 - (id)localizedObject
 {
-    return [self localizedObjectForLanguage:[ZCRAllPreferredLanguages() firstObject]];
+    if (!self.didGenerateLocalizedObject)
+    {
+        _localizedObject = [self _generateLocalizedObject];
+        self.didGenerateLocalizedObject = YES;
+    }
+    
+    return _localizedObject;
 }
 
-- (id)localizedObjectForLanguage:(NSString *)languageCode
+- (ZCRLocalizedObject *(^)(ZCRLocalizationSpecificity))withSpecificity
 {
-    return [self _localizedObjectForLanguage:languageCode specificity:self.specificity];
+    __weak typeof(self) weakSelf = self;
+    return ^ZCRLocalizedObject *(ZCRLocalizationSpecificity specificity) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        
+        if (specificity == strongSelf.specificity)
+        {
+            return strongSelf;
+        }
+        
+        return [[[strongSelf class] alloc] initWithLocalizationTable:strongSelf.localizationTable
+                                                   specificity:specificity
+                                               desiredLanguage:strongSelf.desiredLanguage
+                                                       defaultObject:strongSelf.defaultObject];
+    };
 }
 
-- (id)_localizedObjectForLanguage:(NSString *)languageCode specificity:(ZCRLocalizationSpecificity)specificity
+- (ZCRLocalizedObject *(^)(NSString *))inLanguage
 {
-    NSArray *allLanguages = ZCRAllPreferredLanguages();
-    languageCode = ZCRCanonizeLanguageCode(languageCode, allLanguages);
+    __weak typeof(self) weakSelf = self;
+    return ^ZCRLocalizedObject *(NSString *desiredLanguageCode) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        
+        if ((!desiredLanguageCode && !strongSelf.desiredLanguage) ||
+            (desiredLanguageCode && strongSelf.desiredLanguage && [strongSelf.desiredLanguage isEqualToString:desiredLanguageCode]))
+        {
+            return strongSelf;
+        }
+        
+        return [[[strongSelf class] alloc] initWithLocalizationTable:strongSelf.localizationTable
+                                                   specificity:strongSelf.specificity
+                                               desiredLanguage:desiredLanguageCode
+                                                       defaultObject:strongSelf.defaultObject];
+    };
+}
+
+- (ZCRLocalizedObject *(^)(id))withDefault
+{
+    __weak typeof(self) weakSelf = self;
+    return ^ZCRLocalizedObject *(id defaultObject) {
+        __strong typeof(weakSelf) strongSelf = weakSelf;
+        
+        if (defaultObject == strongSelf.defaultObject)
+        {
+            return strongSelf;
+        }
+        
+        return [[[strongSelf class] alloc] initWithLocalizationTable:strongSelf.localizationTable
+                                                         specificity:strongSelf.specificity
+                                                     desiredLanguage:strongSelf.desiredLanguage
+                                                       defaultObject:defaultObject];
+    };
+}
+
+
+#pragma mark - Localization
+
+- (id)_generateLocalizedObject
+{
+    NSArray *allLanguages = ZCRAllPreferredLanguages(self.localizationTable.allKeys);
+    NSString *languageCode = (self.desiredLanguage.length > 0) ? self.desiredLanguage : allLanguages.firstObject;
+    
+    id object = [self _localizedObjectForLanguage:languageCode specificity:self.specificity allLanguages:allLanguages];
+    return object ?: self.defaultObject;
+}
+
+- (id)_localizedObjectForLanguage:(NSString *)languageCode specificity:(ZCRLocalizationSpecificity)specificity allLanguages:(NSArray *)allLanguages
+{
+    languageCode = [NSLocale canonicalLanguageIdentifierFromString:languageCode];
     
     switch (specificity)
     {
@@ -208,6 +285,16 @@ static NSDictionary *ZCRCanonizeLocalizationTable(NSDictionary *rawLocalizationT
 
 #pragma mark - NSObject
 
+- (BOOL)isEqual:(id)object
+{
+    return [self.localizedObject isEqual:object];
+}
+
+- (NSUInteger)hash
+{
+    return [self.localizedObject hash];
+}
+
 - (NSString *)description
 {
     return [self.localizedObject description];
@@ -215,7 +302,34 @@ static NSDictionary *ZCRCanonizeLocalizationTable(NSDictionary *rawLocalizationT
 
 - (NSString *)debugDescription
 {
-    return [NSString stringWithFormat:@"<%@:%p> specificity: %@\n%@", [self class], self, ZCRStringFromSpecificity(self.specificity), self.localizationTable];
+    return [NSString stringWithFormat:@"<%@:%p> specificity: %@, desired language: %@\n%@", [self class], self, ZCRStringFromSpecificity(self.specificity), self.desiredLanguage, self.localizationTable];
+}
+
+- (BOOL)respondsToSelector:(SEL)aSelector
+{
+    if ([super respondsToSelector:aSelector])
+    {
+        return YES;
+    }
+    else
+    {
+        return [self.localizedObject respondsToSelector:aSelector];
+    }
+}
+
+- (id)forwardingTargetForSelector:(SEL)aSelector
+{
+    return self.localizedObject;
+}
+
+- (NSMethodSignature *)methodSignatureForSelector:(SEL)sel
+{
+    return [self.localizedObject methodSignatureForSelector:sel];
+}
+
+- (void)forwardInvocation:(NSInvocation *)invocation
+{
+    [invocation invokeWithTarget:self.localizedObject];
 }
 
 @end

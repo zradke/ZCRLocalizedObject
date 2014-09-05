@@ -8,7 +8,11 @@
 
 #import "ZCRViewController.h"
 
+#import <ZCRLocalizedObject/ZCRLocalizedObject.h>
+
 @interface ZCRViewController ()
+
+@property (weak, nonatomic) IBOutlet UILabel *localizedLabel;
 
 @end
 
@@ -17,12 +21,13 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-}
-
-- (void)didReceiveMemoryWarning
-{
-    [super didReceiveMemoryWarning];
-    // Dispose of any resources that can be recreated.
+    
+    NSDictionary *testData = @{@"en": @"Hello!",
+                               @"fr": @"Bonjour!",
+                               @"ja": @"こんにちは！",
+                               @"de": @"Guten Tag!"};
+    
+    self.localizedLabel.text = (id)ZCRLocalize(testData);
 }
 
 @end

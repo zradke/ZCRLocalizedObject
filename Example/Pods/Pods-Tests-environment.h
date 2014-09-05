@@ -27,6 +27,6 @@
 // ZCRLocalizedObject
 #define COCOAPODS_POD_AVAILABLE_ZCRLocalizedObject
 #define COCOAPODS_VERSION_MAJOR_ZCRLocalizedObject 0
-#define COCOAPODS_VERSION_MINOR_ZCRLocalizedObject 1
+#define COCOAPODS_VERSION_MINOR_ZCRLocalizedObject 2
 #define COCOAPODS_VERSION_PATCH_ZCRLocalizedObject 0
 

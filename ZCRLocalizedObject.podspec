@@ -1,6 +1,6 @@
 Pod::Spec.new do |s|
   s.name             = "ZCRLocalizedObject"
-  s.version          = "0.1.0"
+  s.version          = "0.2.0"
   s.summary          = "Dynamic localization that just works."
   s.homepage         = "https://github.com/zradke/ZCRLocalizedObject"
   s.license          = 'MIT'
