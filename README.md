@@ -45,7 +45,8 @@ Requires the language and region to match exactly, otherwise returns nil.
 NSDictionary *localizedData = @{@"en-GB": @"The colour",
                                 @"en": @"The color"};
                   
-ZCRLocalizedObject *object = ZCRLocalize(localizedData).withSpecificity(ZCRLocalizationSpecificityExact);
+ZCRLocalizedObject *object = ZCRLocalize(localizedData);
+object = object.withSpecificity(ZCRLocalizationSpecificityExact);
 
 // Device set to 'English'
 object.localizedObject; // nil
@@ -62,6 +63,7 @@ Checks for an exact match, then checks for a match with based on the root langua
 NSDictionary *localizedData = @{@"en": @"The color"};
 
 ZCRLocalizedObject *object = ZCRLocalize(localizedData);
+object = object.withSpecificity(ZCRLocalizationSpecificityLanguage);
 
 // Device set to 'British English'
 object.localizedObject; // @"The color" 
@@ -74,7 +76,7 @@ Checks for an exact match, then a language match, then goes through all possible
 ```
 NSDictionary *localizedData = @{@"fr": @"La couleur"};
                   
-ZCRLocalizedObject *object = ZCRLocalize(localizedData).withSpecificity(ZCRLocalizationSpecificityMostRecent);
+ZCRLocalizedObject *object = ZCRLocalize(localizedData);
 
 // Device set to 'French' then 'English'
 object.localizedObject; // @"La couleur" 
